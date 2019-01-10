@@ -1,0 +1,15 @@
+---
+# defaults for docker-compose ------------------------------------------------ #
+docker_compose_binary_dir: "/usr/local/bin"
+docker_compose_config_dir: "/etc/docker-compose"
+
+docker_compose_reload_minutes: 15
+docker_compose_stop_action: down
+docker_compose_validate: true
+docker_compose_reload_max_delay: 0 # Have no delay, should be less than docker_compose_reload_minutes
+
+docker_compose_config:
+  version: "3"
+  services:
+
+# ---------------------------------------------------------------------------- #

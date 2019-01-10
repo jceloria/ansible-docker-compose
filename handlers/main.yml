@@ -1,0 +1,17 @@
+---
+# handlers used by docker-compose -------------------------------------------- #
+- name: reload systemd
+  systemd:
+    daemon_reload: yes
+
+- name: restart docker-compose-{{ docker_compose_project }}
+  service:
+    name: docker-compose-{{ docker_compose_project }}
+    state: restarted
+
+- name: restart docker-compose-reload-{{ docker_compose_project }}.timer
+  service:
+    name: docker-compose-reload-{{ docker_compose_project }}.timer
+    state: restarted
+
+# ---------------------------------------------------------------------------- #

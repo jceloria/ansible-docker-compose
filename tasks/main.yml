@@ -1,0 +1,110 @@
+---
+# install docker-compose as a container -------------------------------------- #
+- name: Check latest docker-compose release
+  uri:
+    url: https://api.github.com/repos/docker/compose/releases/latest
+  register: latest
+
+- set_fact:
+    download_url: "{{ latest.json.assets | selectattr('name', 'equalto', 'run.sh') | map(attribute='browser_download_url') | first }}"
+
+- name: download docker-compose
+  get_url:
+    url: "{{ download_url }}"
+    dest: "{{ docker_compose_binary_dir }}/docker-compose"
+    mode: 0755
+
+- name: create configuration directory
+  file:
+    dest: "{{ docker_compose_config_dir }}/{{ docker_compose_project }}"
+    state: directory
+    mode: 0700
+
+- name: configure docker-compose.yml
+  template:
+    src: docker-compose.yml.j2
+    dest: "{{ docker_compose_config_dir }}/{{ docker_compose_project }}/docker-compose.yml"
+    mode: 0600
+  register: compose_file
+  notify:
+    - reload systemd
+    - restart docker-compose-{{ docker_compose_project }}
+
+- name: validate configuration
+  shell: "{{ docker_compose_binary_dir }}/docker-compose config -q"
+  args:
+    chdir: "{{ docker_compose_config_dir }}/{{ docker_compose_project }}"
+  when: compose_file.changed and docker_compose_validate
+
+# install systemd docker-compose service file -------------------------------- #
+- name: install docker-compose-{{ docker_compose_project }}.service
+  copy:
+    dest: "/etc/systemd/system/docker-compose-{{ docker_compose_project }}.service"
+    content: |
+      [Unit]
+      Description=Docker Compose - {{ docker_compose_project }}
+      After=docker.service network-online.target
+      Requires=docker.service network-online.target
+      
+      [Service]
+      WorkingDirectory={{ docker_compose_config_dir }}/{{ docker_compose_project }}
+      Type=oneshot
+      RemainAfterExit=yes
+      
+      ExecStartPre=-{{ docker_compose_binary_dir }}/docker-compose pull --quiet --ignore-pull-failures
+      ExecStart={{ docker_compose_binary_dir }}/docker-compose up -d --remove-orphans
+      
+      ExecStop={{ docker_compose_binary_dir }}/docker-compose {{ docker_compose_stop_action }}
+      
+      ExecReload={{ docker_compose_binary_dir }}/docker-compose pull --quiet --ignore-pull-failures
+      ExecReload={{ docker_compose_binary_dir }}/docker-compose up -d --remove-orphans
+      
+      [Install]
+      WantedBy=docker.service
+  notify:
+    - reload systemd
+    - restart docker-compose-{{ docker_compose_project }}
+
+# install systemd docker-compose-reload service file ------------------------- #
+- name: install docker-compose-reload-{{ docker_compose_project }}.service
+  copy:
+    dest: "/etc/systemd/system/docker-compose-reload-{{ docker_compose_project }}.service"
+    content: |
+      [Unit]
+      Description=Refresh images and update containers
+      
+      [Service]
+      Type=oneshot
+      
+      ExecStart=/bin/systemctl reload-or-restart docker-compose-{{ docker_compose_project }}.service
+  notify:
+    - reload systemd
+
+# install systemd docker-compose-reload timer file --------------------------- #
+- name: install docker-compose-reload-{{ docker_compose_project }}.timer
+  copy:
+    dest: "/etc/systemd/system/docker-compose-reload-{{ docker_compose_project }}.timer"
+    content: |
+      [Unit]
+      Description=Refresh images and update containers
+      Requires=docker-compose-{{ docker_compose_project }}.service
+      After=docker-compose-{{ docker_compose_project }}.service
+      
+      [Timer]
+      OnCalendar=*:0/{{ docker_compose_reload_minutes }}
+      RandomizedDelaySec={{ docker_compose_reload_max_delay }}
+      
+      [Install]
+      WantedBy=timers.target
+  notify:
+    - reload systemd
+    - restart docker-compose-reload-{{ docker_compose_project }}.timer
+
+# enable services ------------------------------------------------------------ #
+- name: ensure services are enabled
+  service: name={{ item }} enabled=yes state=started
+  loop:
+    - docker-compose-{{ docker_compose_project }}
+    - docker-compose-reload-{{ docker_compose_project }}.timer
+
+# ---------------------------------------------------------------------------- #

@@ -1,0 +1,16 @@
+#jinja2: lstrip_blocks: True
+{{ ansible_managed | comment }}
+
+{% if docker_compose_config.version is defined %}
+version: "{{ docker_compose_config.version }}"
+{% endif %}
+
+services:
+{% for key, val in docker_compose_config.items() -%}
+  {% if (key == 'services') %}
+    {% for container in val %}
+  {{ container.name }}:
+{{ container.options | to_nice_yaml | indent(4, true) }}{{ "\n" }}
+    {% endfor %}
+  {% endif %}
+{% endfor %}

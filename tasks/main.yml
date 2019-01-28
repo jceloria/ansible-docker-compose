@@ -28,7 +28,7 @@
   register: compose_file
   notify:
     - reload systemd
-    - restart docker-compose-{{ docker_compose_project }}
+    - restart docker-compose
 
 - name: validate configuration
   shell: "{{ docker_compose_binary_dir }}/docker-compose config -q"
@@ -63,7 +63,7 @@
       WantedBy=docker.service
   notify:
     - reload systemd
-    - restart docker-compose-{{ docker_compose_project }}
+    - restart docker-compose
 
 # install systemd docker-compose-reload service file ------------------------- #
 - name: install docker-compose-reload-{{ docker_compose_project }}.service
@@ -98,7 +98,7 @@
       WantedBy=timers.target
   notify:
     - reload systemd
-    - restart docker-compose-reload-{{ docker_compose_project }}.timer
+    - restart docker-compose-reload.timer
 
 # enable services ------------------------------------------------------------ #
 - name: ensure services are enabled

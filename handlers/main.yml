@@ -4,12 +4,12 @@
   systemd:
     daemon_reload: yes
 
-- name: restart docker-compose-{{ docker_compose_project }}
+- name: restart docker-compose
   service:
     name: docker-compose-{{ docker_compose_project }}
     state: restarted
 
-- name: restart docker-compose-reload-{{ docker_compose_project }}.timer
+- name: restart docker-compose-reload.timer
   service:
     name: docker-compose-reload-{{ docker_compose_project }}.timer
     state: restarted

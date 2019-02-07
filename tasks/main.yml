@@ -20,6 +20,13 @@
     state: directory
     mode: 0700
 
+- name: run custom docker-compose commands before starting service
+  shell: "{{ docker_compose_binary_dir }}/docker-compose {{ item }}"
+  args:
+    chdir: "{{ docker_compose_config_dir }}/{{ docker_compose_project }}"
+  when: custom_docker_compose_commands is defined
+  loop: "{{ custom_docker_compose_commands|flatten }}"
+
 - name: configure docker-compose.yml
   template:
     src: docker-compose.yml.j2

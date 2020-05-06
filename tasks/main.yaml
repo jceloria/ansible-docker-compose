@@ -27,10 +27,10 @@
   when: custom_docker_compose_commands is defined
   loop: "{{ custom_docker_compose_commands|flatten }}"
 
-- name: configure docker-compose.yml
+- name: configure docker-compose.yaml
   template:
-    src: docker-compose.yml.j2
-    dest: "{{ docker_compose_config_dir }}/{{ docker_compose_project }}/docker-compose.yml"
+    src: docker-compose.yaml.j2
+    dest: "{{ docker_compose_config_dir }}/{{ docker_compose_project }}/docker-compose.yaml"
     mode: 0600
   register: compose_file
   notify:

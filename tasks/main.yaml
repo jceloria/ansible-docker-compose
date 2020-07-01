@@ -1,5 +1,5 @@
 ---
-# install docker-compose as a container -------------------------------------- #
+# install docker-compose as a container ------------------------------------------------------------------------------ #
 - name: Check latest docker-compose release
   uri:
     url: https://api.github.com/repos/docker/compose/releases/latest
@@ -43,7 +43,7 @@
     chdir: "{{ docker_compose_config_dir }}/{{ docker_compose_project }}"
   when: compose_file.changed and docker_compose_validate
 
-# install systemd docker-compose service file -------------------------------- #
+# install systemd docker-compose service file ------------------------------------------------------------------------ #
 - name: install docker-compose-{{ docker_compose_project }}.service
   copy:
     dest: "/etc/systemd/system/docker-compose-{{ docker_compose_project }}.service"
@@ -72,7 +72,7 @@
     - reload systemd
     - restart docker-compose
 
-# install systemd docker-compose-reload service file ------------------------- #
+# install systemd docker-compose-reload service file ----------------------------------------------------------------- #
 - name: install docker-compose-reload-{{ docker_compose_project }}.service
   copy:
     dest: "/etc/systemd/system/docker-compose-reload-{{ docker_compose_project }}.service"
@@ -87,7 +87,7 @@
   notify:
     - reload systemd
 
-# install systemd docker-compose-reload timer file --------------------------- #
+# install systemd docker-compose-reload timer file ------------------------------------------------------------------- #
 - name: install docker-compose-reload-{{ docker_compose_project }}.timer
   copy:
     dest: "/etc/systemd/system/docker-compose-reload-{{ docker_compose_project }}.timer"
@@ -107,11 +107,11 @@
     - reload systemd
     - restart docker-compose-reload.timer
 
-# enable services ------------------------------------------------------------ #
+# enable services ---------------------------------------------------------------------------------------------------- #
 - name: ensure services are enabled
   service: name={{ item }} enabled=yes state=started
   loop:
     - docker-compose-{{ docker_compose_project }}
     - docker-compose-reload-{{ docker_compose_project }}.timer
 
-# ---------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------------------------------------------------- #

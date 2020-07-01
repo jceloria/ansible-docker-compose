@@ -107,11 +107,4 @@
     - reload systemd
     - restart docker-compose-reload.timer
 
-# enable services ---------------------------------------------------------------------------------------------------- #
-- name: ensure services are enabled
-  service: name={{ item }} enabled=yes state=started
-  loop:
-    - docker-compose-{{ docker_compose_project }}
-    - docker-compose-reload-{{ docker_compose_project }}.timer
-
 # -------------------------------------------------------------------------------------------------------------------- #

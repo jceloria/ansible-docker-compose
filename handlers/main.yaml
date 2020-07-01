@@ -8,10 +8,12 @@
   service:
     name: docker-compose-{{ docker_compose_project }}
     state: restarted
+    enabled: yes
 
 - name: restart docker-compose-reload.timer
   service:
     name: docker-compose-reload-{{ docker_compose_project }}.timer
     state: restarted
+    enabled: yes
 
 # -------------------------------------------------------------------------------------------------------------------- #

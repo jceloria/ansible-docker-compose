@@ -26,9 +26,6 @@
     dest: "{{ docker_compose_config_dir }}/{{ docker_compose_project }}/docker-compose.yaml"
     mode: 0600
   register: compose_file
-  notify:
-    - reload systemd
-    - restart docker-compose
 
 - name: validate configuration
   shell: "{{ docker_compose_binary_dir }}/docker-compose config -q"
@@ -68,9 +65,6 @@
       
       [Install]
       WantedBy=docker.service
-  notify:
-    - reload systemd
-    - restart docker-compose
 
 # install systemd docker-compose-reload service file ----------------------------------------------------------------- #
 - name: install docker-compose-reload-{{ docker_compose_project }}.service
@@ -84,8 +78,6 @@
       Type=oneshot
       
       ExecStart=/bin/systemctl reload-or-restart docker-compose-{{ docker_compose_project }}.service
-  notify:
-    - reload systemd
 
 # install systemd docker-compose-reload timer file ------------------------------------------------------------------- #
 - name: install docker-compose-reload-{{ docker_compose_project }}.timer
@@ -103,8 +95,16 @@
       
       [Install]
       WantedBy=timers.target
-  notify:
-    - reload systemd
-    - restart docker-compose-reload.timer
+
+# enable services ---------------------------------------------------------------------------------------------------- #
+- name: reload systemd
+  systemd:
+    daemon_reload: yes
+
+- name: ensure services are enabled
+  service: name={{ item }} enabled=yes state=started
+  loop:
+    - docker-compose-{{ docker_compose_project }}
+    - docker-compose-reload-{{ docker_compose_project }}.timer
 
 # -------------------------------------------------------------------------------------------------------------------- #
